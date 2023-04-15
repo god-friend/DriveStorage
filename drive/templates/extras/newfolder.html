@@ -1,0 +1,14 @@
+<div class="collapse" id="collapseExample">
+    <form class="form" method="post" action="{%url 'new_folder' %}">
+        {%csrf_token%}
+        <div class="row">
+            <div class="col-4">
+                <label class="form-label" for="newFolder">Name of Folder</label>
+            </div>
+            <div class="col-8">
+                <input required class="form-control" type="text" name="newF">
+            </div>
+        </div>
+            <input type="submit" value="Create" class="btn btn-primary btn-sm">
+    </form>
+</div>

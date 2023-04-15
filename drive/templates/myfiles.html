@@ -1,0 +1,86 @@
+{%extends 'base.html' %}
+
+{%block body%}
+
+{% include 'extras/navbar.html' %}
+
+{%if request.user|stringformat:'s' == 'AnonymousUser'%}
+<b><label class="form-label">Please <a href="{% url 'login' %}">Login</a> to Continue......</label></b>
+{%else%}
+{%if message != ''%}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <strong>{{message}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{%endif%}
+{%if error != ''%}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>{{error}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{%endif%}
+<div class="container">
+    <div class="mt-2">
+        <p>{{current_path}}</p>
+    </div>
+    <div class="row">
+        <div class="mt-2 mb-1 col">
+            <p>
+                <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#Uploadcollapse" role="button"
+                    aria-expanded="false" aria-controls="collapseExample">
+                    Upload File
+                </a>
+                <a class="btn btn-primary btn-sm" data-bs-toggle="collapse" href="#collapseExample" role="button"
+                    aria-expanded="false" aria-controls="collapseExample">
+                    Create Folder
+                </a>
+            </p>
+        </div>
+    </div>
+    <div class="row mb-3">
+        {%include 'extras/newfolder.html'%}
+        {%include 'extras/uploadFile.html'%}
+    </div>
+
+    {%if current_path != '/'%}
+    <ul class="list-group flush">
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <a class="ms-2 me-auto mb-auto btn btn-light w-100 text-start" href="{% url 'go_back' %}">
+                /..<small>parent</small>
+            </a>
+        </li>
+    </ul>
+    {%endif%}
+    <ol class="list-group list-group-numbered">
+        
+        {%for folder in folders%}
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <a class="ms-2 me-auto btn btn-outline-dark w-100 text-start" href="{% url 'change_dir' folder %}">
+                {{folder}}
+                <a class="badge bg-primary btn btn-sm align-items-center ms-2" href="{% url 'download_as_zip' folder %}" >Download as Zip</a> 
+                <a class="badge bg-primary btn btn-sm align-items-center ms-2" href="{% url 'delete_folder' folder %}" onclick="return confirm('Are Your Sure You want to Delete {{folder}} and all its content??')">Delete Folder</a>
+            </a>
+        </li>
+        {%endfor%}
+
+        {%for file in files%}
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">
+                    {{file.filename}}
+                </div>
+                {{file.upload_time}}
+            </div>
+            <span class="badge rounded-pill">
+                <div class="btn-group" role="group" aria-label="Basic example">
+                    <button class="btn btn-link btn-sm" onclick="copyText('{{file.get_full_url}}')"> Copy Link</button>
+                    <a class="btn btn-link btn-sm" href="{% url 'download_file' file.file.url|urlencode %}"> Download</a>
+                    <a class="btn btn-link btn-sm" href="{% url 'delete' file.id %}" onclick="return confirm('Are you Sure You want to Delete {{file.filename}}??')">Delete</a>
+                </div>
+            </span>
+        </li>
+        {%endfor%}
+    </ol>
+</div>
+{%endif%}
+{%endblock body%}

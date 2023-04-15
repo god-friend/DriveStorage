@@ -1,0 +1,38 @@
+{%extends 'base.html' %}
+
+{%block body%}
+
+<div class="container">
+    {%if error_login %}
+    <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+        <strong>{{error_login}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    
+    {%endif%}
+    <form class="form mt-5" method="post">
+        {%csrf_token%}
+        {%for fields in form%}
+        <div class="row">
+            <div class="col-2">
+                <label class="form-label" for="{{fields.is_for_label}}">{{fields.label}}</label>
+            </div>
+            <div class="col-8">
+                {{fields}}
+            </div>
+            <div class="col-2">
+                {%if fields.help_text%}
+                {{fields.help_text}}
+                {%endif%}
+            </div>
+        </div>
+        {%endfor%}
+        <input type="submit" value="Login" class="btn btn-primary">
+    </form>
+    <div class="mt-3">
+        <p>Doesn't have an Account?? <a href="{% url 'signup' %}">Register Here</a></p>
+    </div>
+</div>
+
+
+{%endblock body%}

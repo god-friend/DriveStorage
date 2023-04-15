@@ -1,0 +1,18 @@
+<div class="collapse" id="Uploadcollapse">
+    <form class="form" method="post" enctype="multipart/form-data" action="{% url 'upload_file' %}">
+        {%csrf_token%}
+        {%for fields in form%}
+        <div class="row mt-3">
+            <div class="col-2">
+                <label class="form-label" for="{{fields.id_for_label}}">
+                    {{fields.label}}
+                </label>
+            </div>
+            <div class="col-8">
+                {{fields}}
+            </div>
+        </div>
+        {%endfor%}
+        <input type="submit" value="Upload" class="btn btn-primary btn-sm">
+    </form>
+</div>

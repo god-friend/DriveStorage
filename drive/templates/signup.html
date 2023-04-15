@@ -1,0 +1,36 @@
+{%extends 'base.html' %}
+
+{%block body%}
+
+<div class="container">
+    <form class="form mt-5" method="post">
+        {%csrf_token%}
+    {%for fields in form%}
+    <div class="row">
+        <div class="col-2">
+            <label class="form-label" for="{{fields.id_for_label}}"><b>{{fields.label}}</b></label>
+        </div>
+        <div class="col-8">
+            {{fields}}
+        </div>
+        <div class="col-2">
+            {%if fields.help_text%}
+                {{fields.help_text}}
+            {%endif%}
+        </div>
+    </div>
+
+    {% if fields.errors%}
+        {{fields.errors}}
+    {%endif%}
+
+    {%endfor%}
+
+    <input type="Submit" value="Signup" class="btn btn-primary">
+    </form>
+
+    <div class="mt-3">
+        <p>Already have an Account?? <a href="{% url 'login' %}">Login Here</a></p>
+    </div>
+</div>
+{%endblock body%}
