@@ -6,9 +6,13 @@ from .extras import get_folders, create_dir, file_exists, remove_folder, create_
 import mimetypes, os
 from django.conf import settings
 
-CURRENT_PATH = '/'
+CURRENT_PATH = {}
 MESSAGE = ''
 ERROR = ''
+
+def add_key(key):
+    global CURRENT_PATH
+    CURRENT_PATH[key] = "/"
 
 def change_msgError(message, Error):
     global MESSAGE, ERROR
@@ -21,6 +25,7 @@ def validate_request(request, method):
     return False
 
 def signup(request):
+    
     form = None
     if request.method == 'POST':
         form = SignUp(request.POST)
@@ -32,6 +37,7 @@ def signup(request):
             em = form.cleaned_data['email']
             pwd = form.cleaned_data['pwd']
             User.objects.create_user(username=un, first_name=fn, last_name=ln, email=em, password=pwd)
+
             return redirect('/login')
        
     if request.method == 'GET':
@@ -56,6 +62,7 @@ def loginUser(request):
                 error_login = "Username and Password Doesn't Match"
             else:
                 login(request, user)
+                add_key(user)
                 return redirect('/')
     return render(request, 'login.html', context={"form": form, "error_login": error_login})
 
@@ -67,10 +74,10 @@ def index(request):
     global CURRENT_PATH
     data = {}
     if validate_request(request, "GET"):
-        files = UploadedFiles.objects.filter(user=request.user, path=CURRENT_PATH)
+        files = UploadedFiles.objects.filter(user=request.user, path=CURRENT_PATH[request.user])
         data["files"] = files
-        data["folders"] = get_folders(request.user, CURRENT_PATH)
-        data["current_path"] = CURRENT_PATH
+        data["folders"] = get_folders(request.user, CURRENT_PATH[request.user])
+        data["current_path"] = CURRENT_PATH[request.user]
         data["form"] = UploadForm(label_suffix=" :: ")
         data["message"] = MESSAGE
         data["error"] = ERROR
@@ -84,10 +91,10 @@ def upload_files(request):
         if form.is_valid():
             all_files = request.FILES.getlist('file')
             for files in all_files:
-                if file_exists(request.user, CURRENT_PATH, files.name):
+                if file_exists(request.user, CURRENT_PATH[request.user], files.name):
                     change_msgError("", str(files.name) + " Already Exists")
                     return redirect('/')
-                file_obj = UploadedFiles.objects.create(user=request.user, path=CURRENT_PATH, file=files)
+                file_obj = UploadedFiles.objects.create(user=request.user, path=CURRENT_PATH[request.user], file=files)
                 file_obj.link = request.build_absolute_uri("download/"+file_obj.file.url)
                 file_obj.save()
             
@@ -112,15 +119,15 @@ def delete_file(request, file_id):
 def go_back(request):
     global CURRENT_PATH
     if validate_request(request, "GET"):
-        if CURRENT_PATH != '/' and len(CURRENT_PATH) > 1:
-            if CURRENT_PATH.endswith('/'):
-                CURRENT_PATH = CURRENT_PATH[:-1]
-            p = CURRENT_PATH.split('/')
+        if CURRENT_PATH[request.user] != '/' and len(CURRENT_PATH) > 1:
+            if CURRENT_PATH[request.user].endswith('/'):
+                CURRENT_PATH[request.user] = CURRENT_PATH[request.user][:-1]
+            p = CURRENT_PATH[request.user].split('/')
             p.pop()
             if len(p) == 1:
-                CURRENT_PATH = "/"
+                CURRENT_PATH[request.user] = "/"
             else:
-                CURRENT_PATH = "/".join(p) + "/"
+                CURRENT_PATH[request.user] = "/".join(p) + "/"
         change_msgError("", "")
         return redirect('/')
     return HttpResponse("Method Not Allowed")
@@ -129,14 +136,14 @@ def change_path(request, filepath):
     global CURRENT_PATH
     if validate_request(request, "GET"):
         change_msgError("", "")
-        CURRENT_PATH += filepath + '/'
+        CURRENT_PATH[request.user] += filepath + '/'
         return redirect('/')
     return HttpResponse("Method Not Allowed")
 
 def new_folder(request):
     global MESSAGE
     if validate_request(request, "POST"):
-        if create_dir(request.user, CURRENT_PATH, request.POST['newF']):
+        if create_dir(request.user, CURRENT_PATH[request.user], request.POST['newF']):
             change_msgError(request.POST["newF"] + " Created Successfully", "")
         else:
             change_msgError("", request.POST["newF"]+" Already Exists")
@@ -146,7 +153,7 @@ def new_folder(request):
 
 def delete_folder(request, folder):
     if validate_request(request, "GET"):
-        if remove_folder(request.user, CURRENT_PATH, folder):
+        if remove_folder(request.user, CURRENT_PATH[request.user], folder):
             change_msgError(folder+" Deleted Successfully", "")
         else:
             change_msgError("", "Unable to Delete "+folder)
@@ -158,7 +165,7 @@ def download_as_zip(request, folder):
     if validate_request(request, "GET"):
         archive = None
         try:
-            archive = create_archive(request.user, CURRENT_PATH, folder)
+            archive = create_archive(request.user, CURRENT_PATH[request.user], folder)
             path = open(archive, 'rb')
             mimetype, _ = mimetypes.guess_type(archive)
             response = HttpResponse(path, content_type=mimetype)
